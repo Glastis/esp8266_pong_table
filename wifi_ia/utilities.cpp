@@ -9,6 +9,6 @@ int                         comp_str(const char *str1, const char *str2)
   {
       ++i;
   }
-  return (str1[i] == str2[i] || !str2[i]);
+  return (str1[i] == str2[i] || !str1[i] ||!str2[i]);
 }
 
