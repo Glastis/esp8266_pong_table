@@ -1,59 +1,54 @@
-#include "client.h"
-#include "file_system.h"
-#include "utilities.h"
+#include "include/client.h"
+#include "include/file_system.h"
+#include "include/utilities.h"
 
 void                    send_header(WiFiClient *client, unsigned int http_code, const char *http_message, const char *content_type)
 {
-    client->print((char *)REPONSE_HEADER_HTML_VERSION);
+    client->print(REPONSE_HEADER_HTML_VERSION);
     client->print(" ");
-    client->print((char *)http_code);
+    client->print(http_code);
     client->print(" ");
-    client->println((char *)http_message);
+    client->println(http_message);
     if (content_type)
     {
-        client->print((char *)REPONSE_HEADER_CONTENT_TYPE);
+        client->print(REPONSE_HEADER_CONTENT_TYPE);
         client->print(": ");
-        client->println((char *)content_type);
+        client->println(content_type);
     }
 }
 
 int                     send_page(WiFiClient *client, const char *page)
 {
+    if (page[0] == '/' && !page[1])
+    {
+        page = PAGE_INDEX;
+    }
     if (!file_exists(page))
     {
+        Serial.println("Page not found :(");
         send_header(client, HTTP_CODE_NOT_FOUND_CODE, HTTP_CODE_NOT_FOUND_MESSAGE, REPONSE_HEADER_CONTENT_TEXT);
         send_page_to_client(client, PAGE_NOT_FOUND);
         return (-1);
     }
+    Serial.println("Page found :)");
     return (send_page_to_client(client, page));
-}
-
-int                     is_allowed_http_method(const char *request)
-{
-    if (strcmp(METHOD_GET, request))
-    {
-        return (0);
-    }
-    return (1);
 }
 
 static void             parse_request(WiFiClient *client, t_req *req, char *buff)
 {
     unsigned int        i;
     unsigned int        sav;
+    unsigned int        shifted;
 
     i = 0;
-    Serial.print("Request: ");
-    Serial.println(buff);
     req->page = NULL;
     req->method = NULL;
     req->http_version = NULL;
     while (buff[i] && buff[i] != '\n')
     {
-        Serial.println(i);
-        if (strcmp(&buff[i], REQUEST_HTTP_VERSION))
+        shifted = 0;
+        if (comp_str(&buff[i], REQUEST_HTTP_VERSION))
         {
-            Serial.println("HTTP COND");
             sav = i;
             while (buff[i] && buff[i] != '\n' && buff[i] != ' ')
             {
@@ -64,11 +59,11 @@ static void             parse_request(WiFiClient *client, t_req *req, char *buff
                 buff[i] = '\0';
                 ++i;
             }
+            shifted = 1;
             req->http_version = &buff[sav];
         }
-        else if (strcmp(&buff[i], METHOD_GET))
+        else if (comp_str(&buff[i], METHOD_GET))
         {
-            Serial.println("GET COND");
             req->method = METHOD_GET;
             sav = i;
             while (buff[i] && buff[i] != '\n' && buff[i] != '/')
@@ -93,10 +88,27 @@ static void             parse_request(WiFiClient *client, t_req *req, char *buff
                     ++i;
                 }
                 req->page = &buff[sav];
+                shifted = 1;
             }
         }
-        ++i;
+        if (!shifted)
+        {
+            ++i;
+        }
     }
+}
+
+static void             print_request(t_req *req, int endl)
+{
+    Serial.print("Request method: ");
+    Serial.print(req->method);
+    Serial.println((endl ? "$" : " "));
+    Serial.print("Request page: ");
+    Serial.print(req->page);
+    Serial.println((endl ? "$" : " "));
+    Serial.print("Request version: ");
+    Serial.print(req->http_version);
+    Serial.println((endl ? "$" : " "));
 }
 
 int                     handle_client(WiFiClient *client)
@@ -118,16 +130,10 @@ int                     handle_client(WiFiClient *client)
     buff[(request.length() > REQUEST_BUFF_LEN) ? REQUEST_BUFF_LEN : request.length()] = '\0';
     parse_request(client, &req, buff);
     client->flush();
-    Serial.print("req meth: ");
-    Serial.println(req.method);
-    Serial.print("req page: ");
-    Serial.println(req.page);
-    Serial.print("req version: ");
-    Serial.println(req.http_version);
+    print_request(&req, 1);
 
     if (req.method == METHOD_GET)
     {
-        Serial.println("penis2");
         return (send_page(client, req.page));
     }
     Serial.println("penis3");

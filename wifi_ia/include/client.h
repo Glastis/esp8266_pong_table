@@ -28,6 +28,7 @@ const char HTTP_CODE_NOT_FOUND_MESSAGE[] =  "Not Found";
 const char HTTP_CODE_NOT_ALLOWED_MESSAGE[]= "Method Not Allowed";
 
 //Web Pages
+const char PAGE_INDEX[] =                   "/index.html";
 const char PAGE_NOT_FOUND[] =               "/404.html";
 
 //Http methods
@@ -52,7 +53,6 @@ struct                  s_req
 typedef struct s_req    t_req;
 
 int                     send_page(WiFiClient *client, const char *page);
-int                     is_allowed_http_method(const char *request);
 void                    send_header(WiFiClient *client, unsigned int http_code, const char *http_message, const char *content_type);
 int                     handle_client(WiFiClient *client);
 

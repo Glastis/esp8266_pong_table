@@ -1,15 +1,16 @@
-#include "file_system.h"
+#include "include/file_system.h"
+#include "include/client.h"
 #include "FS.h"
-#include "client.h"
 
 void                        init_fs()
 {
-  Serial.println(SPIFFS.begin());
+  SPIFFS.begin();
+  SPIFFS.format();
 }
 
 int                         file_exists(const char *path)
 {
-    return ((int)SPIFFS.exists(path));
+    return (SPIFFS.exists(path) ? 1 : 0);
 }
 
 int                         send_page_to_client(WiFiClient *client, const char *page)
@@ -22,7 +23,7 @@ int                         send_page_to_client(WiFiClient *client, const char *
     if (!file)
     {
         send_header(client, HTTP_CODE_NOT_FOUND_CODE, HTTP_CODE_NOT_FOUND_MESSAGE, REPONSE_HEADER_CONTENT_TEXT);
-        Serial.println(HTTP_CODE_NOT_FOUND_MESSAGE);
+        client->println(HTTP_CODE_NOT_FOUND_MESSAGE);
         return (-1);
     }
     readed = 0;

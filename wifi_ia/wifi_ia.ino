@@ -1,5 +1,6 @@
-#include "main.h"
-#include "file_system.h"
+#include "include/main.h"
+#include "include/file_system.h"
+#include "include/client.h"
 #include <ESP8266WiFi.h>
 
 WiFiServer server(WEB_SERVER_PORT);
@@ -20,7 +21,6 @@ void loop()
     client = server.available();
     if (!client)
     {
-//        Serial.println("kek");
         delay(1);
         return;
     }
